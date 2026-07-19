@@ -54,12 +54,15 @@ jobs:
 
       - name: Package artifact
         run: |
-          cd build/bin
-          if [ -d "Swarm Lens.app" ]; then
-            zip -r "${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}" "Swarm Lens.app"
-          else
-            tar -czf "${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}" "Swarm Lens"
-          fi
+          out=$(ls -A build/bin)
+          case "$out" in
+            *.app)
+              zip -r "${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}" "build/bin/$out"
+              ;;
+            *)
+              tar -czf "${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}" -C build/bin "$out"
+              ;;
+          esac
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
