@@ -13,4 +13,4 @@ wailsjs/
 
 # OS
 .DS_Store
-build
+build/bin/
