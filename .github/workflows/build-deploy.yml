@@ -1,0 +1,90 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+            artifact-name: swarm-lens-linux-amd64
+            archive-ext: .tar.gz
+          - os: macos-latest
+            platform: darwin/arm64
+            artifact-name: swarm-lens-darwin-arm64
+            archive-ext: .zip
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build application
+        run: wails build -platform ${{ matrix.platform }} -clean
+
+      - name: Package artifact
+        run: |
+          cd build/bin
+          if [ -d "Swarm Lens.app" ]; then
+            zip -r "${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}" "Swarm Lens.app"
+          else
+            tar -czf "${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}" "Swarm Lens"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ runner.temp }}/${{ matrix.artifact-name }}${{ matrix.archive-ext }}
+          retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            swarm-lens-linux-amd64/*
+            swarm-lens-darwin-arm64/*
+          generate_release_notes: true
