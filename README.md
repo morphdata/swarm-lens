@@ -6,7 +6,7 @@ A **Lens-style IDE for Docker Swarm**, built as a native desktop app:
 - **Frontend:** React + TypeScript + Tailwind — runs natively as a **macOS app**/**Linux app** via [Wails v2](https://wails.io)
 - **Contexts:** add as many servers as you like and switch between them from the top-bar dropdown, like kubeconfig contexts in Lens
 
-![icon](build/appicon.png)
+![icon](./assets/appicon.png)
 
 ## Features
 
