@@ -1,0 +1,16 @@
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Wails
+wailsjs/
+
+# OS
+.DS_Store
+build
